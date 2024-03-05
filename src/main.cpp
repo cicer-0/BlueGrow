@@ -1,7 +1,10 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#define MOTOR_PIN 4  // Pin donde está conectado el motor
+#define SENSOR_PIN A0   // Pin donde está conectado el sensor de humedad
+#define SENSOR_LUZ1_PIN A1   // Pin donde está conectado el sensor de humedad
+#define SENSOR_LUZ2_PIN A5   // Pin donde está conectado el sensor de humedad
+#define MOTOR_PIN 4      // Pin donde está conectado el motor
 
 SoftwareSerial bluetooth(6, 5); // RX, TX
 
@@ -10,49 +13,31 @@ void setup()
   Serial.begin(9600);    // Iniciar comunicación serial para debug
   bluetooth.begin(9600); // Iniciar comunicación serial para Bluetooth
 
+  pinMode(SENSOR_PIN, INPUT); // Configurar el pin del sensor como entrada
+  pinMode(SENSOR_LUZ1_PIN, INPUT); // Configurar el pin del sensor como entrada
+  pinMode(SENSOR_LUZ2_PIN, INPUT); // Configurar el pin del sensor como entrada
   pinMode(MOTOR_PIN, OUTPUT); // Configurar el pin del motor como salida
 
-  Serial.println("Listo para recibir y enviar datos por Bluetooth...");
+  Serial.println("Listo para enviar datos por Bluetooth...");
 }
 
 void loop()
 {
-  // Leer datos desde el dispositivo Bluetooth
-  if (bluetooth.available())
-  {
-    char receivedChar = (char)bluetooth.read();
-    Serial.print("Caracter recibido desde Bluetooth: ");
-    Serial.println(receivedChar);
+  // Leer valor del sensor de humedad
+  int humedad = analogRead(SENSOR_PIN);
+  int humedad = analogRead(SENSOR_LUZ1_PIN);
+  int humedad = analogRead(SENSOR_LUZ2_PIN);
 
-    // Verificar si se recibió "up" para encender el motor
-    if (receivedChar == 'u')
-    {
-      if (bluetooth.available() && bluetooth.read() == 'p')
-      {
-        digitalWrite(MOTOR_PIN, HIGH); // Encender el motor
-        Serial.println("Motor encendido!");
-        bluetooth.println("Motor Encendido"); // Enviar mensaje por Bluetooth
-      }
-    }
+  // Enviar valor de humedad por Bluetooth
+  bluetooth.print("Humedad: ");
+  bluetooth.println(humedad);
 
-    // Verificar si se recibió "down" para apagar el motor
-    else if (receivedChar == 'd')
-    {
-      if (bluetooth.available() && bluetooth.read() == 'o' && bluetooth.available() && bluetooth.read() == 'w' && bluetooth.available() && bluetooth.read() == 'n')
-      {
-        digitalWrite(MOTOR_PIN, LOW); // Apagar el motor
-        Serial.println("Motor apagado!");
-        bluetooth.println("Motor Apagado"); // Enviar mensaje por Bluetooth
-      }
-    }
-  }
+  // Verificar si la humedad es baja para encender el motor
+  // if (humedad < 500) {
+  //   digitalWrite(MOTOR_PIN, HIGH); // Encender el motor
+  // } else {
+  //   digitalWrite(MOTOR_PIN, LOW);  // Apagar el motor
+  // }
 
-  // Enviar datos al dispositivo Bluetooth
-  if (Serial.available())
-  {
-    char sendChar = (char)Serial.read();
-    Serial.print("Enviando caracter a Bluetooth: ");
-    Serial.println(sendChar);
-    bluetooth.write(sendChar);
-  }
+  delay(1000); // Esperar 1 segundo antes de enviar otra vez
 }
