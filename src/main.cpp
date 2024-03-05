@@ -1,68 +1,58 @@
-#include <SoftwareSerial.h>
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 
-// Definición de pines
-#define sensorHumedadPin A0
-#define sensorLuzPin A1
-#define motorRiegoPin 9
+#define MOTOR_PIN 4  // Pin donde está conectado el motor
 
-// Definición de umbrales y valores
-int umbralHumedad = 500; // Ajusta según tus necesidades
-int umbralLuz = 500;     // Ajusta según tus necesidades
-
-// Configuración del módulo Bluetooth
-SoftwareSerial bluetoothSerial(2, 3); // RX, TX
+SoftwareSerial bluetooth(6, 5); // RX, TX
 
 void setup()
 {
-  // Inicialización de pines
-  pinMode(sensorHumedadPin, INPUT);
-  pinMode(sensorLuzPin, INPUT);
-  pinMode(motorRiegoPin, OUTPUT);
+  Serial.begin(9600);    // Iniciar comunicación serial para debug
+  bluetooth.begin(9600); // Iniciar comunicación serial para Bluetooth
 
-  // Inicialización de comunicación serial para módulo Bluetooth
-  Serial.begin(9600);
-  bluetoothSerial.begin(9600);
+  pinMode(MOTOR_PIN, OUTPUT); // Configurar el pin del motor como salida
+
+  Serial.println("Listo para recibir y enviar datos por Bluetooth...");
 }
 
 void loop()
 {
-  // Lectura de sensores
-  int humedad = analogRead(sensorHumedadPin);
-  int luz = analogRead(sensorLuzPin);
-
-  // Envío de datos al módulo Bluetooth
-  enviarBluetooth(humedad, luz);
-
-  // Control de riego
-  if (humedad < umbralHumedad && luz > umbralLuz)
+  // Leer datos desde el dispositivo Bluetooth
+  if (bluetooth.available())
   {
-    activarRiego();
+    char receivedChar = (char)bluetooth.read();
+    Serial.print("Caracter recibido desde Bluetooth: ");
+    Serial.println(receivedChar);
+
+    // Verificar si se recibió "up" para encender el motor
+    if (receivedChar == 'u')
+    {
+      if (bluetooth.available() && bluetooth.read() == 'p')
+      {
+        digitalWrite(MOTOR_PIN, HIGH); // Encender el motor
+        Serial.println("Motor encendido!");
+        bluetooth.println("Motor Encendido"); // Enviar mensaje por Bluetooth
+      }
+    }
+
+    // Verificar si se recibió "down" para apagar el motor
+    else if (receivedChar == 'd')
+    {
+      if (bluetooth.available() && bluetooth.read() == 'o' && bluetooth.available() && bluetooth.read() == 'w' && bluetooth.available() && bluetooth.read() == 'n')
+      {
+        digitalWrite(MOTOR_PIN, LOW); // Apagar el motor
+        Serial.println("Motor apagado!");
+        bluetooth.println("Motor Apagado"); // Enviar mensaje por Bluetooth
+      }
+    }
   }
-  else
+
+  // Enviar datos al dispositivo Bluetooth
+  if (Serial.available())
   {
-    desactivarRiego();
+    char sendChar = (char)Serial.read();
+    Serial.print("Enviando caracter a Bluetooth: ");
+    Serial.println(sendChar);
+    bluetooth.write(sendChar);
   }
-
-  delay(1000); // Espera 1 segundo entre cada ciclo
-}
-
-void enviarBluetooth(int humedad, int luz)
-{
-  bluetoothSerial.print("H:");
-  bluetoothSerial.print(humedad);
-  bluetoothSerial.print(", L:");
-  bluetoothSerial.println(luz);
-}
-
-void activarRiego()
-{
-  digitalWrite(motorRiegoPin, HIGH);
-  Serial.println("Riego activado");
-}
-
-void desactivarRiego()
-{
-  digitalWrite(motorRiegoPin, LOW);
-  Serial.println("Riego desactivado");
 }
