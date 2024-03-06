@@ -3,8 +3,6 @@
 #include "IrrigationSystem.h"
 #include "SensorFunctions.h"
 
-extern SoftwareSerial bluetooth;
-
 void checkAndRunIrrigation()
 {
     unsigned long currentTime = millis();
