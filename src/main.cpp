@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#define SENSOR_PIN A0   // Pin donde está conectado el sensor de humedad
-#define SENSOR_LUZ1_PIN A1   // Pin donde está conectado el sensor de humedad
-#define SENSOR_LUZ2_PIN A5   // Pin donde está conectado el sensor de humedad
-#define MOTOR_PIN 4      // Pin donde está conectado el motor
+// Definir constantes para los pines de los sensores y del motor
+#define SENSOR_HUMEDAD_PIN A0
+#define SENSOR_LUZ_PIN_1 A1
+#define SENSOR_LUZ_PIN_2 A5
+#define MOTOR_PIN 4
 
 SoftwareSerial bluetooth(6, 5); // RX, TX
 
@@ -13,31 +14,38 @@ void setup()
   Serial.begin(9600);    // Iniciar comunicación serial para debug
   bluetooth.begin(9600); // Iniciar comunicación serial para Bluetooth
 
-  pinMode(SENSOR_PIN, INPUT); // Configurar el pin del sensor como entrada
-  pinMode(SENSOR_LUZ1_PIN, INPUT); // Configurar el pin del sensor como entrada
-  pinMode(SENSOR_LUZ2_PIN, INPUT); // Configurar el pin del sensor como entrada
-  pinMode(MOTOR_PIN, OUTPUT); // Configurar el pin del motor como salida
-
+  // Configurar pines de los sensores como entradas y el pin del motor como salida
+  pinMode(SENSOR_HUMEDAD_PIN, INPUT);
+  pinMode(SENSOR_LUZ_PIN_1, INPUT);
+  pinMode(SENSOR_LUZ_PIN_2, INPUT);
+  pinMode(MOTOR_PIN, OUTPUT);
   Serial.println("Listo para enviar datos por Bluetooth...");
+}
+
+// Función para leer el valor de un sensor dado su pin
+int leerSensor(int pin)
+{
+  return analogRead(pin);
+}
+
+// Función para enviar un mensaje por Bluetooth
+void enviarMensajeBluetooth(const char* mensaje, int valor)
+{
+  bluetooth.print(mensaje);
+  bluetooth.println(valor);
 }
 
 void loop()
 {
-  // Leer valor del sensor de humedad
-  int humedad = analogRead(SENSOR_PIN);
-  int humedad = analogRead(SENSOR_LUZ1_PIN);
-  int humedad = analogRead(SENSOR_LUZ2_PIN);
+  // Leer valores de los sensores
+  int humedad = leerSensor(SENSOR_HUMEDAD_PIN);
+  int luz1 = leerSensor(SENSOR_LUZ_PIN_1);
+  int luz2 = leerSensor(SENSOR_LUZ_PIN_2);
 
-  // Enviar valor de humedad por Bluetooth
-  bluetooth.print("Humedad: ");
-  bluetooth.println(humedad);
+  // Enviar valores por Bluetooth
+  enviarMensajeBluetooth("Humedad: ", humedad);
+  enviarMensajeBluetooth("Luz 1: ", luz1);
+  enviarMensajeBluetooth("Luz 2: ", luz2);
 
-  // Verificar si la humedad es baja para encender el motor
-  // if (humedad < 500) {
-  //   digitalWrite(MOTOR_PIN, HIGH); // Encender el motor
-  // } else {
-  //   digitalWrite(MOTOR_PIN, LOW);  // Apagar el motor
-  // }
-
-  delay(1000); // Esperar 1 segundo antes de enviar otra vez
+  delay(1000); // Esperar 1 segundo antes de realizar la próxima lectura y envío
 }
