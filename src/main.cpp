@@ -1,51 +1,35 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
-
-// Definir constantes para los pines de los sensores y del motor
-#define SENSOR_HUMEDAD_PIN A0
-#define SENSOR_LUZ_PIN_1 A1
-#define SENSOR_LUZ_PIN_2 A5
-#define MOTOR_PIN 4
+#include "IrrigationSystem.h"
+#include "SensorFunctions.h"
 
 SoftwareSerial bluetooth(6, 5); // RX, TX
 
-void setup()
-{
-  Serial.begin(9600);    // Iniciar comunicación serial para debug
-  bluetooth.begin(9600); // Iniciar comunicación serial para Bluetooth
+IrrigationProgram irrigationProgram = {4, 1, 300};
 
-  // Configurar pines de los sensores como entradas y el pin del motor como salida
-  pinMode(SENSOR_HUMEDAD_PIN, INPUT);
-  pinMode(SENSOR_LUZ_PIN_1, INPUT);
-  pinMode(SENSOR_LUZ_PIN_2, INPUT);
-  pinMode(MOTOR_PIN, OUTPUT);
-  Serial.println("Listo para enviar datos por Bluetooth...");
+unsigned long lastIrrigation = 0;
+
+void setup() {
+  Serial.begin(9600);
+  bluetooth.begin(9600);
+
+  setupSensors();
+
+  Serial.println("Ready to send data via Bluetooth...");
 }
 
-// Función para leer el valor de un sensor dado su pin
-int leerSensor(int pin)
-{
-  return analogRead(pin);
-}
+void loop() {
+  int humidity = readHumiditySensor();
+  int light1 = readLightSensor1();
+  int light2 = readLightSensor2();
 
-// Función para enviar un mensaje por Bluetooth
-void enviarMensajeBluetooth(const char* mensaje, int valor)
-{
-  bluetooth.print(mensaje);
-  bluetooth.println(valor);
-}
+  sendBluetoothMessage("Humidity: ", humidity);
+  sendBluetoothMessage("Light 1: ", light1);
+  sendBluetoothMessage("Light 2: ", light2);
 
-void loop()
-{
-  // Leer valores de los sensores
-  int humedad = leerSensor(SENSOR_HUMEDAD_PIN);
-  int luz1 = leerSensor(SENSOR_LUZ_PIN_1);
-  int luz2 = leerSensor(SENSOR_LUZ_PIN_2);
+  sendLowHumidityNotification(humidity);
 
-  // Enviar valores por Bluetooth
-  enviarMensajeBluetooth("Humedad: ", humedad);
-  enviarMensajeBluetooth("Luz 1: ", luz1);
-  enviarMensajeBluetooth("Luz 2: ", luz2);
+  checkAndRunIrrigation();
 
-  delay(1000); // Esperar 1 segundo antes de realizar la próxima lectura y envío
+  delay(1000);
 }
