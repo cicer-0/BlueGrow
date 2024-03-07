@@ -3,49 +3,68 @@
 #include "IrrigationSystem.h"
 #include "SensorFunctions.h"
 
-void checkAndRunIrrigation()
+void checkAndRunIrrigation(int humidity)
 {
     unsigned long currentTime = millis();
-
-    if (isTimeForIrrigation(currentTime))
+    if (isTimeToIrrigate(currentTime))
     {
-        if (isHumidityAcceptable())
+        if (isHumidityInAllowedRange(humidity))
         {
-            activateIrrigation(irrigationProgram.duration);
+            activateIrrigationSystem(irrigationProgram.duration);
         }
         else
         {
-            simulateIrrigation(irrigationProgram.duration);
+            simulateIrrigationSystem(irrigationProgram.duration);
         }
-        updateLastIrrigation(millis());
+        updateLastIrrigationTime(currentTime);
+    }
+    else
+    {
+        if (isLowHumidity(humidity))
+        {
+            bluetooth.println("ALERT! Low humidity detected!");
+            activateLowHumidityIrrigation(irrigationProgram.duration, currentTime);
+        }
     }
 }
 
-bool isHumidityAcceptable()
+bool isHumidityInAllowedRange(int humidity)
 {
-    int currentHumidity = readHumiditySensor();
-    return currentHumidity <= irrigationProgram.maxHumidity;
+    return map(humidity, MAP_MAX, MAP_MIN, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX) < irrigationProgram.maxHumidity;
 }
 
-void activateIrrigation(int duration)
+void activateIrrigationSystem(int duration)
 {
     digitalWrite(MOTOR_PIN, HIGH);
-    delay(duration * 1000);
+    delay(duration * MILLISECONDS_IN_A_SECOND);
     digitalWrite(MOTOR_PIN, LOW);
 }
 
-void simulateIrrigation(int duration)
+void simulateIrrigationSystem(int duration)
 {
-    delay(duration * 1000);
+    delay(duration * MILLISECONDS_IN_A_SECOND);
 }
 
-void sendLowHumidityAlert(int humidity)
+bool isLowHumidity(int humidity)
 {
-    if (humidity < irrigationProgram.minHumidity)
+    return map(humidity, MAP_MAX, MAP_MIN, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX) < irrigationProgram.minHumidity;
+}
+
+void activateLowHumidityIrrigation(int duration, unsigned long currentTime)
+{
+    unsigned long remainingTimeForNextIrrigation =
+        (irrigationProgram.frequency * MILLISECONDS_IN_A_SECOND) - (currentTime - lastIrrigation);
+
+    Serial.print("currentTime: ");
+    Serial.println(currentTime);
+    Serial.print("lastIrrigation: ");
+    Serial.println(lastIrrigation);
+    Serial.print("remainingTimeForNextIrrigation: ");
+    Serial.println(remainingTimeForNextIrrigation);
+    if (remainingTimeForNextIrrigation > static_cast<unsigned long>(irrigationProgram.duration * MILLISECONDS_IN_A_SECOND))
     {
-        bluetooth.println("ALERT! Low humidity detected!");
-        activateIrrigation(irrigationProgram.duration);
-        // updateLastIrrigation(millis());
+        Serial.println("Activating irrigation system...");
+        activateIrrigationSystem(duration);
     }
 }
 
@@ -55,12 +74,12 @@ void sendBluetoothMessage(const char *label, int value)
     bluetooth.println(value);
 }
 
-bool isTimeForIrrigation(unsigned long currentTime)
+bool isTimeToIrrigate(unsigned long currentTime)
 {
-    return currentTime - lastIrrigation >= irrigationProgram.frequency;
+    return currentTime - lastIrrigation >= static_cast<unsigned long>(irrigationProgram.frequency * MILLISECONDS_IN_A_SECOND);
 }
 
-void updateLastIrrigation(unsigned long newTime)
+void updateLastIrrigationTime(unsigned long newTime)
 {
     lastIrrigation = newTime;
 }

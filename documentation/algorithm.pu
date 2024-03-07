@@ -1,4 +1,4 @@
-@startuml Arduino Nano Riego
+@startuml Arduino Nano Sistema de Riego
 
 ' Definición de símbolos
 skinparam defaultFontName Arial
@@ -15,31 +15,32 @@ title Diagrama de Proceso - Arduino
 ' Definición de nodos y flujo
 
 start
-:Configurar Sensores;
-:Configurar Bluetooth;
-:Mostrar "Listo para enviar datos por Bluetooth";
-
 repeat
-  :Leer Humedad;
-  :Leer Luz 1;
-  :Leer Luz 2;
-  :Enviar Humedad por Bluetooth;
-  :Enviar Luz 1 por Bluetooth;
-  :Enviar Luz 2 por Bluetooth;
-  if (Humidity < 70%) then (Sí)
-    :Enviar Alerta de Humedad Baja;
-    :Activar Riego;
-  endif
-  if (Hora de Riego?) then (Sí)
-    if (Humedad > 90%?) then (Sí)
-      :Activar Riego;
+    :Leer Humedad;
+    :Leer Luz 1;
+    :Leer Luz 2;
+    :Enviar Humedad por Bluetooth;
+    :Enviar Luz 1 por Bluetooth;
+    :Enviar Luz 2 por Bluetooth;
+    if (Es Hora de Riego?) then (Sí)
+        if (Humedad en Rango Permitido?) then (Sí)
+            :Activar Sistema de Riego;
+        else (No)
+            :Simular Sistema de Riego;
+        endif
+        :Actualizar Último Tiempo de Riego;
     else (No)
-      :Simular Riego;
+        if (Humedad Baja?) then (Sí)
+            :Enviar Mensaje Bluetooth "¡ALERTA! ¡Humedad baja detectada!";
+            :Calcular Tiempo Restante Para Próximo Riego;
+            if (Tiempo Restante > Duración del Riego) then (Sí)
+                :Activar Sistema de Riego;
+            endif
+
+        endif
     endif
-    :Actualizar Último Riego;
-  endif
-  :Esperar 1 segundo;
 repeat while (true)
+
 
 stop
 
