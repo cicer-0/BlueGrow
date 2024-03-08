@@ -11,8 +11,8 @@ struct IrrigationProgram
   unsigned int duration;
   int minHumidity;
   int maxHumidity;
+  String to_string() const;
 };
-
 extern IrrigationProgram irrigationProgram;
 extern unsigned long lastIrrigation;
 extern unsigned long millisResetCount;
@@ -28,5 +28,8 @@ void activateLowHumidityIrrigation(int duration, unsigned long currentTime);
 bool isTimeToIrrigate(unsigned long currentTime);
 void updateLastIrrigationTime(unsigned long newTime);
 unsigned long adjustTimeIfNecessary(unsigned long currentTime);
+void sendBluetoothMessageConfig(const char *message);
+void receiveBluetoothMessage();
+void processConfigMessage(String message);
 
 #endif

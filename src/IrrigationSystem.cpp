@@ -2,6 +2,7 @@
 #include <SoftwareSerial.h>
 #include "IrrigationSystem.h"
 #include "SensorFunctions.h"
+#include <ArduinoJson.h>
 
 void checkAndRunIrrigation(int humidity)
 {
@@ -87,4 +88,94 @@ unsigned long adjustTimeIfNecessary(unsigned long currentTime)
         currentTime = currentTime + (4294967295 - lastIrrigation);
     }
     return currentTime;
+}
+
+void sendBluetoothMessageConfig(const char *message)
+{
+    // Implementación de seguridad para enviar mensajes Bluetooth
+    bluetooth.print("CONFIG: ");
+    bluetooth.println(message);
+}
+
+void receiveBluetoothMessage()
+{
+    while (bluetooth.available() > 0)
+    {
+        Serial.print(bluetooth.read());
+        Serial.println();
+    }
+    if (bluetooth.available())
+    {
+        Serial.println("bluetooth.available");
+
+        String receivedMessage = bluetooth.readStringUntil('\n');
+        receivedMessage.trim();
+        Serial.println(receivedMessage);
+        // Verifica si el mensaje recibido comienza con la palabra clave para seguridad
+        if (receivedMessage.startsWith("CONFIG: "))
+        {
+            Serial.println("JSON");
+            receivedMessage.remove(0, 8); // Remueve "SECURE: " del mensaje
+
+            // Procesa el mensaje seguro
+            processConfigMessage(receivedMessage);
+        }
+    }
+}
+
+void processConfigMessage(String message)
+{
+    // Mensaje seguro recibido, procesa y actualiza la configuración de irrigationProgram
+
+    // Parsea el mensaje JSON
+    JsonDocument doc; // Documento JSON
+    DeserializationError error = deserializeJson(doc, message);
+
+    if (error)
+    {
+        sendBluetoothMessageConfig("INVALID JSON");
+        Serial.println("INVALID JSON");
+        return;
+    }
+
+    JsonObject config = doc.as<JsonObject>();
+
+    // Verifica y actualiza cada parámetro de configuración
+    if (config.containsKey("frequency") && config.containsKey("maxHumidity") && config.containsKey("minHumidity") && config.containsKey("duration"))
+    {
+        irrigationProgram.frequency = config["frequency"];
+        irrigationProgram.maxHumidity = config["maxHumidity"];
+        irrigationProgram.minHumidity = config["minHumidity"];
+        irrigationProgram.duration = config["duration"];
+        Serial.println(irrigationProgram.to_string());
+        // Envía confirmación de actualización
+        sendBluetoothMessageConfig("CONFIG UPDATED");
+    }
+    else
+    {
+        sendBluetoothMessageConfig("MISSING PARAMETERS");
+    }
+}
+
+String IrrigationProgram::to_string() const
+{
+    String result = "";
+
+    result += "Frequency: ";
+    result += frequency;
+    result += "\n";
+
+    result += "Duration: ";
+    result += duration;
+    result += "\n";
+
+    result += "Minimum humidity: ";
+    result += minHumidity;
+    result += "\n";
+
+    result += "Maximum humidity: ";
+    result += maxHumidity;
+    result += "\n";
+
+    return result;
 }

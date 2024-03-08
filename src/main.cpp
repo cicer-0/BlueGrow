@@ -15,6 +15,8 @@ void setup()
   bluetooth.begin(9600);
 
   setupSensors();
+
+  sendBluetoothMessageConfig("READY");
 }
 
 void loop()
@@ -22,10 +24,12 @@ void loop()
   int humidity = readHumiditySensor();
   int light1 = readLightSensor1();
   int light2 = readLightSensor2();
-
   sendBluetoothMessage("Humidity %: ", map(humidity, MAP_MAX, MAP_MIN, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX));
   sendBluetoothMessage("Light 1: ", light1);
   sendBluetoothMessage("Light 2: ", light2);
+
+  // Revisa si hay mensajes nuevos por Bluetooth
+  receiveBluetoothMessage();
 
   checkAndRunIrrigation(humidity);
 }
