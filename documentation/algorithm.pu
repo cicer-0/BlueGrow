@@ -22,6 +22,7 @@ repeat
     :Enviar Humedad por Bluetooth;
     :Enviar Luz 1 por Bluetooth;
     :Enviar Luz 2 por Bluetooth;
+    :Ajustar el tiempo si es necesario
     if (Es Hora de Riego?) then (Sí)
         if (Humedad en Rango Permitido?) then (Sí)
             :Activar Sistema de Riego;

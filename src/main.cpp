@@ -5,9 +5,9 @@
 
 SoftwareSerial bluetooth(6, 5); // RX, TX
 
-IrrigationProgram irrigationProgram = {60, 10, 10, 50};
+IrrigationProgram irrigationProgram = {0, 0, 10, 50};
 
-unsigned long lastIrrigation = 0;
+unsigned long lastIrrigation = 0L;
 
 void setup()
 {
@@ -15,8 +15,6 @@ void setup()
   bluetooth.begin(9600);
 
   setupSensors();
-
-  Serial.println("Ready to send data via Bluetooth...");
 }
 
 void loop()

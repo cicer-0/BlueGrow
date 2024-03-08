@@ -15,6 +15,7 @@ struct IrrigationProgram
 
 extern IrrigationProgram irrigationProgram;
 extern unsigned long lastIrrigation;
+extern unsigned long millisResetCount;
 extern SoftwareSerial bluetooth;
 
 void checkAndRunIrrigation(int humidity);
@@ -26,5 +27,6 @@ void simulateIrrigationSystem(int duration);
 void activateLowHumidityIrrigation(int duration, unsigned long currentTime);
 bool isTimeToIrrigate(unsigned long currentTime);
 void updateLastIrrigationTime(unsigned long newTime);
+unsigned long adjustTimeIfNecessary(unsigned long currentTime);
 
 #endif
