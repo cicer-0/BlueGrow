@@ -6,22 +6,30 @@
 void checkAndRunIrrigation(int humidity)
 {
     unsigned long currentTime = millis();
+    Serial.print("Current time: ");
+    Serial.println(currentTime);
+
     if (isTimeToIrrigate(currentTime))
     {
+        Serial.println("It's time to irrigate!");
         if (isHumidityInAllowedRange(humidity))
         {
+            Serial.println("Humidity is in allowed range. Activating irrigation system...");
             activateIrrigationSystem(irrigationProgram.duration);
         }
         else
         {
+            Serial.println("Humidity is not in allowed range. Simulating irrigation system...");
             simulateIrrigationSystem(irrigationProgram.duration);
         }
         updateLastIrrigationTime(currentTime);
     }
     else
     {
+        Serial.println("It's not time to irrigate yet.");
         if (isLowHumidity(humidity))
         {
+            Serial.println("Low humidity detected!");
             bluetooth.println("ALERT! Low humidity detected!");
             activateLowHumidityIrrigation(irrigationProgram.duration, currentTime);
         }
