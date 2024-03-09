@@ -5,7 +5,7 @@
 
 SoftwareSerial bluetooth(6, 5); // RX, TX
 
-IrrigationProgram irrigationProgram = {0, 0, 10, 50};
+IrrigationProgram irrigationProgram = {0, 0, 0, 100};
 
 unsigned long lastIrrigation = 0L;
 
@@ -24,9 +24,8 @@ void loop()
   int humidity = readHumiditySensor();
   int light1 = readLightSensor1();
   int light2 = readLightSensor2();
-  sendBluetoothMessage("Humidity %: ", map(humidity, MAP_MAX, MAP_MIN, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX));
-  sendBluetoothMessage("Light 1: ", light1);
-  sendBluetoothMessage("Light 2: ", light2);
+  sendBluetoothMessage("HUMIDITY %: ", map(humidity, MAP_MAX, MAP_MIN, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX));
+  sendBluetoothMessage("LIGHT %: ", (map(light1, MAP_MIN, MAP_MAX, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX) + map(light2, MAP_MIN, MAP_MAX, MAP_OUTPUT_MIN, MAP_OUTPUT_MAX)) / 2);
 
   // Revisa si hay mensajes nuevos por Bluetooth
   receiveBluetoothMessage();
